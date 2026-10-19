@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Dashboard – La Liga 2026/27</title>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;800&family=Barlow:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+:root {
+  --bg: #f1ece4; --card: #fbf8f3; --ink: #2a1418; --muted: #7a6368; --line: #dcd2c6;
+  --accent: #b3122f; --gold: #c99a00; --good: #1f7a4d; --blue: #2b6cb0; --bad: #b3122f;
+  color-scheme: light;
+  box-sizing: border-box;
+  padding-top: env(safe-area-inset-top, 0px);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #1b0f12; --card: #28171b; --ink: #f6eeea; --muted: #b9a3a7; --line: #4a2f35;
+    --accent: #ff4d6a; --gold: #f5c518; --good: #5fd39a; --blue: #6aa9ee; --bad: #ff6b81; color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #1b0f12; --card: #28171b; --ink: #f6eeea; --muted: #b9a3a7; --line: #4a2f35;
+  --accent: #ff4d6a; --gold: #f5c518; --good: #5fd39a; --blue: #6aa9ee; --bad: #ff6b81; color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: env(safe-area-inset-top, 0px); }
+body { margin: 0; background: var(--bg); color: var(--ink); font-family: "Barlow", system-ui, sans-serif; padding: 24px 16px 40px; }
+main { max-width: 1040px; margin: 0 auto; }
+h1 { font-family: "Barlow Condensed", Impact, sans-serif; font-weight: 800; font-size: clamp(2.2rem, 7vw, 3.6rem); line-height: 1; margin: 0 0 6px; }
+h2 { font-family: "Barlow Condensed", Impact, sans-serif; font-weight: 600; font-size: 1.3rem; margin: 0 0 10px; }
+.sub { color: var(--muted); margin: 0 0 22px; }
+.kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; margin-bottom: 14px; }
+.kpi { border-left: 4px solid var(--accent); background: var(--card); padding: 10px 14px; border-radius: 6px; }
+.kpi b { display: block; font-family: "Barlow Condensed", Impact, sans-serif; font-size: 2rem; font-weight: 800; }
+.kpi span { color: var(--muted); font-size: .9rem; }
+.card { background: var(--card); border-radius: 6px; padding: 16px; border: 1px solid var(--line); }
+.grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 14px; margin-top: 14px; }
+.scroll { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; min-width: 480px; }
+th, td { padding: 6px 10px; text-align: right; border-bottom: 1px solid var(--line); }
+th { color: var(--muted); font-weight: 600; font-size: .85rem; }
+th:nth-child(2), td:nth-child(2) { text-align: left; }
+th:first-child, td:first-child { text-align: center; width: 40px; border-left: 4px solid transparent; }
+td.pts { font-weight: 800; }
+tr.z-cl td:first-child { border-left-color: var(--good); }
+tr.z-el td:first-child { border-left-color: var(--blue); }
+tr.z-rb td:first-child { border-left-color: var(--bad); }
+.legenda { display: flex; flex-wrap: wrap; gap: 14px; color: var(--muted); font-size: .85rem; margin-top: 10px; }
+.legenda i { display: inline-block; width: 10px; height: 10px; border-radius: 2px; margin-right: 6px; }
+.chart { position: relative; }
+.jogo { display: grid; grid-template-columns: 1fr auto 1fr; gap: 10px; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--line); }
+.jogo .c { text-align: right; } .jogo .f { text-align: left; }
+.jogo .placar { font-family: "Barlow Condensed", Impact, sans-serif; font-weight: 800; font-size: 1.4rem; min-width: 64px; text-align: center; }
+.jogo .v { font-weight: 800; }
+.dia { color: var(--muted); font-size: .8rem; grid-column: 1 / -1; margin-bottom: -4px; }
+.prob { grid-column: 1 / -1; display: flex; height: 8px; border-radius: 4px; overflow: hidden; }
+.prob div:nth-child(1) { background: var(--good); } .prob div:nth-child(2) { background: var(--line); } .prob div:nth-child(3) { background: var(--blue); }
+.probtxt { grid-column: 1 / -1; display: flex; justify-content: space-between; font-size: .8rem; color: var(--muted); }
+.nota { color: var(--muted); font-size: .85rem; margin-top: 18px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>La Liga 2026/27</h1>
+  <p class="sub">Classificação e jogos reais · posição em 19/10/2026</p>
+
+  <div class="kpis">
+    <div class="kpi"><b id="kLider">–</b><span id="kLiderSub">líder</span></div>
+    <div class="kpi"><b id="kVant">–</b><span id="kVantSub">pontos de vantagem do líder</span></div>
+    <div class="kpi"><b id="kGols">–</b><span>gols nos últimos 10 jogos</span></div>
+    <div class="kpi"><b id="kMedia">–</b><span>gols por jogo (últimos 10)</span></div>
+  </div>
+
+  <div class="card scroll">
+    <h2>Classificação</h2>
+    <table>
+      <thead><tr><th>#</th><th>Time</th><th>P</th><th>J</th><th>V</th><th>E</th><th>D</th><th>Aprov.</th></tr></thead>
+      <tbody id="tabela"></tbody>
+    </table>
+    <div class="legenda">
+      <span><i style="background:var(--good)"></i>Champions League</span>
+      <span><i style="background:var(--blue)"></i>Europa League</span>
+      <span><i style="background:var(--bad)"></i>Rebaixamento</span>
+    </div>
+  </div>
+
+  <div class="grid">
+    <div class="card"><h2>Pontos por time</h2><div class="chart" style="height:560px"><canvas id="gPontos"></canvas></div></div>
+    <div class="card"><h2>Vitórias, empates e derrotas</h2><div class="chart" style="height:560px"><canvas id="gVED"></canvas></div></div>
+    <div class="card"><h2>Últimos resultados</h2><div id="resultados"></div></div>
+    <div class="card"><h2>Próximos jogos</h2><div id="proximos"></div></div>
+  </div>
+  <p class="nota">Aproveitamento = pontos conquistados ÷ pontos possíveis. Gols por time e artilharia não estão nesta base de dados, por isso não aparecem aqui. As faixas de classificação são uma referência e podem mudar conforme as vagas europeias.</p>
+</main>
+
+<script>
+// ===== 1) DADOS REAIS (classificação e jogos de 19/10/2026) =====
+const nomes = {
+  BAR: "Barcelona", ATM: "Atlético de Madrid", RMA: "Real Madrid", RBB: "Betis", RSO: "Real Sociedad",
+  SEV: "Sevilla", ALA: "Alavés", RCC: "Celta de Vigo", DEP: "Deportivo", OSA: "Osasuna",
+  ATH: "Athletic Bilbao", VIL: "Villarreal", ESP: "Espanyol", RVC: "Rayo Vallecano", GET: "Getafe",
+  RAC: "Racing Santander", LEV: "Levante", ELC: "Elche", VCF: "Valencia", MCF: "Málaga"
+};
+// [sigla, vitórias, empates, derrotas, pontos]
+const classificacao = [
+  ["BAR",9,0,0,27],["ATM",7,1,1,22],["RMA",7,0,2,21],["RBB",6,1,2,19],["RSO",5,1,3,16],
+  ["SEV",4,2,3,14],["ALA",3,2,4,11],["RCC",2,5,2,11],["DEP",2,5,2,11],["OSA",3,2,4,11],
+  ["ATH",2,3,2,9],["VIL",2,3,4,9],["ESP",2,2,5,8],["RVC",2,2,3,8],["GET",2,2,4,8],
+  ["RAC",2,2,5,8],["LEV",1,4,3,7],["ELC",1,4,4,7],["VCF",1,3,5,6],["MCF",0,4,5,4]
+];
+// { data, casa, fora, golsCasa, golsFora }
+const resultados = [
+  { d: "12/10", c: "LEV", f: "SEV", gc: 3, gf: 3 }, { d: "16/10", c: "DEP", f: "LEV", gc: 1, gf: 1 },
+  { d: "17/10", c: "ESP", f: "ATM", gc: 0, gf: 1 }, { d: "17/10", c: "VIL", f: "ELC", gc: 0, gf: 0 },
+  { d: "17/10", c: "RBB", f: "BAR", gc: 2, gf: 5 }, { d: "17/10", c: "VCF", f: "ATH", gc: 0, gf: 0 },
+  { d: "18/10", c: "OSA", f: "RAC", gc: 2, gf: 0 }, { d: "18/10", c: "RCC", f: "ALA", gc: 2, gf: 1 },
+  { d: "18/10", c: "MCF", f: "RSO", gc: 2, gf: 5 }, { d: "18/10", c: "RMA", f: "SEV", gc: 4, gf: 1 }
+];
+// probabilidades em % (casa, empate, fora)
+const proximos = [
+  { d: "Seg 19/10, 16h", c: "GET", f: "RVC", p: [31.1, 32.7, 36.2] },
+  { d: "Qua 21/10, 15h", c: "LEV", f: "ATH", p: [28.2, 28.3, 43.5] },
+  { d: "Sex 23/10, 16h", c: "ALA", f: "MCF", p: [53.8, 26.2, 20] },
+  { d: "Sáb 24/10, 9h",  c: "RVC", f: "ELC", p: [53.9, 24.8, 21.3] },
+  { d: "Sáb 24/10, 11h15", c: "RAC", f: "ESP", p: [38.4, 26.3, 35.3] },
+  { d: "Sáb 24/10, 13h30", c: "VCF", f: "VIL", p: [30.2, 26.4, 43.4] },
+  { d: "Sáb 24/10, 16h", c: "ATM", f: "DEP", p: [77.1, 14.4, 8.5] },
+  { d: "Dom 25/10, 10h", c: "ATH", f: "GET", p: [58.6, 24.5, 16.9] },
+  { d: "Dom 25/10, 12h15", c: "RCC", f: "RBB", p: [34.4, 27.2, 38.4] },
+  { d: "Dom 25/10, 14h30", c: "RSO", f: "LEV", p: [55.4, 23.1, 21.5] }
+];
+
+// ===== 2) PROCESSAMENTO =====
+const linhas = classificacao.map(([s, v, e, d, p]) => ({ s, nome: nomes[s], v, e, d, p, j: v + e + d, aprov: p / ((v + e + d) * 3) * 100 }));
+const golsTotal = resultados.reduce((t, r) => t + r.gc + r.gf, 0);
+const zona = i => i < 4 ? "z-cl" : i < 6 ? "z-el" : i >= 17 ? "z-rb" : "";
+const css = getComputedStyle(document.documentElement);
+const cor = n => css.getPropertyValue(n).trim();
+const corZona = i => i < 4 ? cor("--good") : i < 6 ? cor("--blue") : i >= 17 ? cor("--bad") : cor("--muted");
+
+// ===== 3) KPIs e TABELA =====
+document.getElementById("kLider").textContent = linhas[0].nome;
+document.getElementById("kLiderSub").textContent = "líder com " + linhas[0].p + " pontos";
+document.getElementById("kVant").textContent = linhas[0].p - linhas[1].p;
+document.getElementById("kVantSub").textContent = "pontos sobre o " + linhas[1].nome;
+document.getElementById("kGols").textContent = golsTotal;
+document.getElementById("kMedia").textContent = (golsTotal / resultados.length).toFixed(1).replace(".", ",");
+
+const corpo = document.getElementById("tabela");
+linhas.forEach((x, i) => {
+  const tr = document.createElement("tr");
+  tr.className = zona(i);
+  [i + 1, x.nome, x.p, x.j, x.v, x.e, x.d, x.aprov.toFixed(0) + "%"].forEach((val, k) => {
+    const td = document.createElement("td");
+    td.textContent = val;
+    if (k === 2) td.className = "pts";
+    tr.appendChild(td);
+  });
+  corpo.appendChild(tr);
+});
+
+// ===== 4) GRÁFICOS =====
+Chart.defaults.color = cor("--ink");
+Chart.defaults.borderColor = cor("--line");
+Chart.defaults.font.family = "Barlow, system-ui, sans-serif";
+const rotulos = linhas.map(x => x.nome);
+
+new Chart(document.getElementById("gPontos"), {
+  type: "bar",
+  data: { labels: rotulos, datasets: [{ label: "Pontos", data: linhas.map(x => x.p), backgroundColor: linhas.map((x, i) => corZona(i)) }] },
+  options: { indexAxis: "y", maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true } } }
+});
+new Chart(document.getElementById("gVED"), {
+  type: "bar",
+  data: { labels: rotulos, datasets: [
+    { label: "Vitórias", data: linhas.map(x => x.v), backgroundColor: cor("--good") },
+    { label: "Empates", data: linhas.map(x => x.e), backgroundColor: cor("--gold") },
+    { label: "Derrotas", data: linhas.map(x => x.d), backgroundColor: cor("--bad") }
+  ] },
+  options: { indexAxis: "y", maintainAspectRatio: false, scales: { x: { stacked: true }, y: { stacked: true } } }
+});
+
+// ===== 5) LISTAS DE JOGOS =====
+function el(tag, cls, txt) { const e = document.createElement(tag); if (cls) e.className = cls; if (txt !== undefined) e.textContent = txt; return e; }
+const boxRes = document.getElementById("resultados");
+resultados.slice().reverse().forEach(r => {
+  const j = el("div", "jogo");
+  j.appendChild(el("div", "dia", r.d));
+  j.appendChild(el("div", "c" + (r.gc > r.gf ? " v" : ""), nomes[r.c]));
+  j.appendChild(el("div", "placar", r.gc + " – " + r.gf));
+  j.appendChild(el("div", "f" + (r.gf > r.gc ? " v" : ""), nomes[r.f]));
+  boxRes.appendChild(j);
+});
+const boxProx = document.getElementById("proximos");
+proximos.forEach(m => {
+  const j = el("div", "jogo");
+  j.appendChild(el("div", "dia", m.d));
+  j.appendChild(el("div", "c", nomes[m.c]));
+  j.appendChild(el("div", "placar", "x"));
+  j.appendChild(el("div", "f", nomes[m.f]));
+  const barra = el("div", "prob");
+  m.p.forEach(v => { const s = el("div"); s.style.width = v + "%"; barra.appendChild(s); });
+  j.appendChild(barra);
+  const txt = el("div", "probtxt");
+  txt.appendChild(el("span", "", "Casa " + m.p[0].toFixed(0) + "%"));
+  txt.appendChild(el("span", "", "Empate " + m.p[1].toFixed(0) + "%"));
+  txt.appendChild(el("span", "", "Fora " + m.p[2].toFixed(0) + "%"));
+  j.appendChild(txt);
+  boxProx.appendChild(j);
+});
+</script>
+</body>
+</html>
